@@ -1,21 +1,16 @@
 import os
 import xml.etree.ElementTree as et
 
-import numpy as np
 import pandas as pd
 
 # UCD_trn xml file path
-extra_xml_path = r"D:\tencent_files\chrome_Download\Research\Equilibium_modelling\Partial_equilibium\GCAM\gcam-v7.1\input\extra"
-dir_extra = os.listdir(extra_xml_path)  # SSP3 uses trn_UCD_SSP3
-trn_xml_ls = [
-    file
-    for file in dir_extra
-    if "transportation_UCD_SSP" in file and "_new" not in file
-]
+xml_path = r"C:\Users\sheep\OneDrive_school\workspace\Research\Sys_model\Partial_equilibium\GCAM\gcam-v7.1\input\gcamdata\xml"
+dir_extra = os.listdir(xml_path)  # SSP3 uses trn_UCD_SSP3
+trn_xml_ls = [file for file in dir_extra if "transportation_UCD_SSP" in file]
 trn_xml_path = dict(
     zip(
         ["ssp" + str(i) for i in [1, 2, 4, 5]],
-        [os.path.join(extra_xml_path, file) for file in trn_xml_ls],
+        [os.path.join(xml_path, file) for file in trn_xml_ls],
     )
 )
 
@@ -101,3 +96,15 @@ def xml_input_revise(
                                                             pass
 
     xtree.write(new_file_name, encoding="UTF-8", xml_declaration=True)
+
+
+input_cost = pd.read_excel(
+    "./input_cost.xlsx", sheet_name="sheet1", index_col=[0, 1, 2]
+)
+
+xml_input_revise(
+    trn_xml_path["ssp2"],
+    os.path.join(xml_path, "transportation_UCD_SSP2_new.xml"),
+    input_cost,
+    node_tag_ls=node_tag_ls[0],
+)
