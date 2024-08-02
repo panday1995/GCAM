@@ -9,12 +9,12 @@ dir_extra = os.listdir(xml_path)  # SSP3 uses trn_UCD_SSP3
 trn_xml_ls = [file for file in dir_extra if "transportation_UCD_SSP" in file]
 trn_xml_path = dict(
     zip(
-        ["ssp" + str(i) for i in [1, 2, 4, 5]],
+        ["ssp" + str(i) for i in [1, 3, 5]],
         [os.path.join(xml_path, file) for file in trn_xml_ls],
     )
 )
 
-node_tag_ls = ["minicam-non-energy-input", "minicam-energy-input", "loadFactor"]
+node_tag_ls = ["tracking-non-energy-input", "minicam-energy-input", "loadFactor"]
 subnode_tag_ls = ["input-cost", "coefficient"]
 supplysector_name_ls = ["trn_pass_road_LDV_4W", "trn_freight_road"]
 
@@ -30,7 +30,6 @@ def xml_input_revise(
     data = data_input
     xtree = et.parse(path)
     xroot = xtree.getroot()
-    rows = []
     for child in xroot:
         for region in child:
             if region.attrib.get("name") == "China":
@@ -49,16 +48,10 @@ def xml_input_revise(
                                         for period in stubtechnology:
                                             if period.attrib.get("year") in [
                                                 str(y) for y in data.columns
-                                            ]:  # period_to_rev:
+                                            ]:
                                                 for node in period:
                                                     if node.tag in node_tag_ls:
                                                         try:
-                                                            tranSubsector_name = tranSubsector.attrib.get(
-                                                                "name"
-                                                            )
-                                                            stubtechnology_name = stubtechnology.attrib.get(
-                                                                "name"
-                                                            )
                                                             year = int(
                                                                 period.attrib.get(
                                                                     "year"
@@ -68,8 +61,15 @@ def xml_input_revise(
                                                                 node.text = str(
                                                                     data.loc[
                                                                         (
-                                                                            tranSubsector_name,
-                                                                            stubtechnology_name,
+                                                                            supplysector.attrib.get(
+                                                                                "name"
+                                                                            ),
+                                                                            tranSubsector.attrib.get(
+                                                                                "name"
+                                                                            ),
+                                                                            stubtechnology.attrib.get(
+                                                                                "name"
+                                                                            ),
                                                                             node.tag,
                                                                         ),
                                                                         year,
@@ -85,26 +85,39 @@ def xml_input_revise(
                                                                         sub_node.text = str(
                                                                             data.loc[
                                                                                 (
-                                                                                    tranSubsector_name,
-                                                                                    stubtechnology_name,
+                                                                                    supplysector.attrib.get(
+                                                                                        "name"
+                                                                                    ),
+                                                                                    tranSubsector.attrib.get(
+                                                                                        "name"
+                                                                                    ),
+                                                                                    stubtechnology.attrib.get(
+                                                                                        "name"
+                                                                                    ),
                                                                                     sub_node.tag,
                                                                                 ),
                                                                                 year,
                                                                             ]
                                                                         )
-                                                        except:
-                                                            pass
+                                                        except KeyError as ke:
+                                                            print(
+                                                                f"KeyError: {ke} for node: {node.tag}"
+                                                            )
+                                                        except Exception as e:
+                                                            print(
+                                                                f"Unexpected error: {e}"
+                                                            )
 
     xtree.write(new_file_name, encoding="UTF-8", xml_declaration=True)
 
 
 input_cost = pd.read_excel(
-    "./input_cost.xlsx", sheet_name="sheet1", index_col=[0, 1, 2]
+    "./input_cost.xlsx", sheet_name="Sheet1", index_col=[0, 1, 2, 3]
 )
 
 xml_input_revise(
-    trn_xml_path["ssp2"],
-    os.path.join(xml_path, "transportation_UCD_SSP2_new.xml"),
+    trn_xml_path["ssp3"],
+    os.path.join(xml_path, "transportation_UCD_SSP3_new.xml"),
     input_cost,
     node_tag_ls=node_tag_ls[0],
 )
